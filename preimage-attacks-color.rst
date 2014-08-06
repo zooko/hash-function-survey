@@ -7,7 +7,7 @@ the historical success of collision attacks does not imply a danger of pre-image
 *plus: a history of attacks on secure hash functions*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-by Zooko Wilcox-O'Hearn, `LeastAuthority.com`_, 2014-02-15
+by Zooko Wilcox-O'Hearn, `LeastAuthority.com`_, 2014-07-26
 
 .. _`LeastAuthority.com`: https://LeastAuthority.com
 
@@ -37,16 +37,10 @@ The advice on that web page is that if you are relying on your hash
 function for collision-resistance, then you should be prepared to migrate
 to a new hash function every few years.
 
-Newer hash functions do not appear to be vulnerable to collision attacks,
-but since they are newer, there has also been less time for cryptanalysts
-to find flaws in them. (See `Figure 1`_, below.)
-
-What about pre-image attacks or second pre-image attacks? Have hash
-functions historically turned out to be vulnerable to those?
-
-The answer is that except for “Snefru” (published in 1990), no secure
-hash function has ever been shown to be vulnerable to (second-)pre-image
-attacks.
+One limitation of this analysis is that it considers only *collision
+attacks*. There are some use cases where collision attacks don't matter,
+and all that matters is *pre-image attacks*. What do we learn if we apply
+this sort of analysis to the history of pre-image attacks?
 
 Preliminaries
 =============
@@ -65,19 +59,11 @@ A hash function is *second pre-image resistant* if, given a pre-image, an
 adversary can't find any *other* pre-image which results in the same
 image.
 
-Motivation
-==========
+When collision attacks don't matter
+===================================
 
-My motivation is to build digital signatures from hash functions. Such
-digital signatures can secure (resistant to forgery) as long as the hash
-function they are built out of has second-pre-image resistance,
-e.g. [0]_.
-
-Such a hash-based digital signature would fail if its underlying hash
-function failed at second-pre-image resistance, but this is the *only*
-way that it could be broken—any attack which was able to forge digital
-signatures against such a scheme would *have* to violate the
-second-pre-image resistance of the underlying hash function.
+There are cases where collision-resistance doesn't matter at all and what
+you care about is second-pre-image resistance.
 
 For such uses it would be harmless to be able to generate collisions, but
 harmful to be able to generate pre-images or second-pre-images [*]_. For
@@ -86,6 +72,20 @@ have historically been revealed to be vulnerable to collisions but
 instead whether they've been revealed to be vulnerable to
 (second-)pre-images.
 
+hash-based digital signatures
+-----------------------------
+
+An example of this is the construction of hash-based digital
+signatures. Hash-based digital signatures are secure (resistant to
+forgery) as long as the hash function they are built on has
+second-pre-image resistance, e.g. [0]_.
+
+Such a hash-based digital signature would fail if its underlying hash
+function failed at second-pre-image resistance, but this is the *only*
+way that it could be broken—any attack which was able to forge digital
+signatures against such a scheme would *have* to violate the
+second-pre-image resistance of the underlying hash function.
+
 One reason that hash-based digital signatures might be useful is that if
 an attacker has a sufficiently large quantum computer, they could forge
 digital signatures that rely on factorization or discrete log, such as
@@ -93,23 +93,47 @@ RSA, DSA, ECDSA, or Ed25519. There is no reason to think that such a
 quantum computer would enable them to break secure hash functions,
 however.
 
-.. [*] Be careful about this! The ability to generate collisions can be
-       surprisingly harmful to some systems. This is one of those
-       subtleties of cryptographic engineering which frequently trip up
-       engineers who are not cryptography experts. The famous "Internet
-       Root Cert" attack [18]_ is an example of engineers employed by
-       VeriSign incorrectly thinking that their system was not threatened
-       by collisions absent second-pre-images.
+message authentication codes
+----------------------------
 
-       `git`, which uses SHA-1, is like VeriSign's MD5 certificates in
-       this way—it is *believed* by its developers [50]_ that a mere
-       collision attack (not second-pre-image) against SHA-1 wouldn't be
-       exploitable against git, but there is no proof of this hypothesis.
+password hashing functions
+--------------------------
 
-       In contrast, the hash-based digital signature schemes mentioned in
-       the “Motivation” section, such as [0]_ come with proofs that *any
-       possible* attack which couldn't generate second-pre-images
-       couldn't forge digital signatures.
+Secure hash functions are often used as an 
+
+Proof-of-Work functions
+-----------------------
+
+When collision attacks *do* matter
+==================================
+
+Be careful about this! The ability to generate collisions can be
+surprisingly harmful to many systems. This is one of those subtleties of
+cryptographic engineering which frequently trip up engineers who are not
+cryptography experts. The famous “Internet Root Cert” attack [18]_ is an
+example of engineers working at VeriSign incorrectly thinking that their
+system was not threatened by collisions (in the absence of
+second-pre-images).
+
+`git`, which uses SHA-1, is like VeriSign's MD5 certificates in this
+way—it is *believed* by its developers [50]_ that a mere collision attack
+(not second-pre-image) against SHA-1 wouldn't make git users vulnerable
+to malicious action, but there is no proof of this belief.
+
+.. XXX rsync
+
+In contrast to VeriSign and git, the cryptographic constructions
+mentioned above typically come with proofs showing that the security of
+the construction is guaranteed, assuming the security of some underlying
+component. For example, the hash-based digital signature schemes in [0]_
+come with a proof that *any possible* attack which couldn't generate
+second-pre-images against the hash function couldn't achieve forgery
+against the signature scheme.
+
+Unless you have such a “security reduction” proof 
+
+
+
 
 Results
 =======
@@ -144,15 +168,15 @@ History of attacks on hash functions
 .. role:: r
 .. role:: g
 .. role:: c
+.. role:: o
 
-Here is a catalog of the best published attacks that I could find on any
-hash function.
+This is a timeline of the publication of hash functions and of
+publication of weaknesses in hash functions.
 
-I omit papers with attacks that are less efficient than other published
-attacks (of course). I omit attacks on reduced-round or otherwise
-weakened variants of hash functions (there are a lot of those). I omit
-attacks that have unrealistic requirements, like attacks that require
-2¹²⁸ precomputation or require the messages to be 2⁵⁶ blocks long.
+I omit attacks on reduced-round or otherwise weakened variants of hash
+functions (there are a lot of those). I omit attacks that have
+unrealistic requirements, like attacks that require 2¹²⁸ precomputation
+or require the messages to be 2⁵⁶ blocks long.
 
 .. _`Figure 1`:
 
@@ -166,6 +190,10 @@ attacks that have unrealistic requirements, like attacks that require
    actually implement. If the attacks have been secretly improved then it
    might be possible to violate this property.
 
+:o:`maybe`
+   There are no known attacks that are cheaper than brute force, but the
+   hash output size is small enough that brute force might be feasible.
+
 :g:`yes`
    There is no known attack cheaper than brute force, and to pay for a
    brute force attack is far, far beyond the bounds of possibility for
@@ -174,55 +202,55 @@ attacks that have unrealistic requirements, like attacks that require
 
 .. csv-table:: Figure 1: Chronological view of collision attacks
    :widths: 12,5,5,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8
-   :header: hash,bits ,cpb , '89         , '90         , '91         , '92         , '93         , '94         , '95         , '96         , '97         , '98         , '99   , '00         , '01    ,'02         , '03         , '04        , '05         , '06         , '07         , '08         , '09   , '10        , '11   , '12         , '13   , '14
+   :header: hash,bits        ,cpb , '89         , '90         , '91         , '92         , '93         , '94         , '95         , '96         , '97         , '98         , '99   , '00         , '01         ,'02         , '03         , '04        , '05         , '06         , '07         , '08         , '09   , '10        , '11   , '12         , '13         , '14
 
-   MD2           , 128, 638, :y:` ` [21]_, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `, :y:` `      , :y:` `, :y:` `      , :y:` `      , :y:` `     , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `, :r:` ` [*]_, :r:` `, :r:` `      , :r:` `, :r:` `
-   Snefru-2      , 128,  \?,             , :y:` ` [3]_ , :r:` ` [19]_, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `      , :r:` `, :r:` `      , :r:` `      , :r:` `     , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   MD4           , 128,   3,             , :y:` ` [22]_, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :r:` ` [20]_, :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `      , :r:` `, :r:` `      , :r:` `      , :r:` `     , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   RIPEMD        , 128,  \?,             , :y:` ` [23]_, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `, :y:` `      , :y:` `, :y:` `      , :y:` `      , :r:` ` [7]_, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   MD5           , 128,   6,             ,             ,             , :y:` ` [24]_, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `, :y:` `      , :y:` `, :y:` `      , :y:` `      , :r:` ` [7]_, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   HAVAL-256-3   , 256,  \?,             ,             ,             , :g:` ` [25]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :r:` ` [11]_, :r:` `     , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   SHA-0         , 160,  \?,             ,             ,             ,             , :g:` ` [26]_, :g:` `      , :y:` ` [*]_ , :y:` `      , :y:` `      , :y:` `      , :y:` `, :y:` `      , :y:` `, :y:` `      , :y:` `      , :y:` `     , :y:` `      , :r:` ` [27]_, :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   GOST          , 256,  \?,             ,             ,             ,             ,             , :g:` ` [28]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :y:` ` [14]_, :y:` `, :y:` `     , :y:` `, :y:` `      , :y:` `, :y:` `
-   SHA-1         , 160,   5,             ,             ,             ,             ,             ,             , :g:` ` [29]_, :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :r:` ` [15]_, :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   RIPEMD-160    , 160,  14,             ,             ,             ,             ,             ,             ,             , :g:` ` [30]_, :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :y:` ` [*]_, :y:` `, :y:` `      , :y:` `, :y:` `
-   Tiger         , 192,   7,             ,             ,             ,             ,             ,             ,             , :g:` ` [31]_, :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Panama        , 512, 2.5,             ,             ,             ,             ,             ,             ,             ,             ,             , :g:` ` [33]_, :g:` `, :g:` `      , :g:` `, :y:` ` [34]_, :y:` `      , :y:` `     , :y:` `      , :y:` `      , :r:` ` [35]_, :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   Whirlpool     , 512,  35,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       , :g:` ` [32]_, :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   SHA-256       , 256,  13,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       , :g:` ` [37]_, :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   RadioGatún    , 256,  \?,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             , :g:` ` [38]_, :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Skein         , 256,   6,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [39]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Blake         , 256,   8,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [40]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Grøstl        , 256,  11,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [41]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Keccak (SHA-3), 256,  11,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [42]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   JH            , 256,  16,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [43]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   BLAKE2        , 256,   4,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             ,             ,       ,            ,       , :g:` ` [44]_, :g:` `, :g:` `
+   MD2           , :o:` ` 128, 638, :y:` ` [21]_, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `     , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `, :r:` ` [*]_, :r:` `, :r:` `      , :r:` `      , :r:` `
+   Snefru-2      , :o:` ` 128,  \?,             , :y:` ` [3]_ , :r:` ` [19]_, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `     , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `      , :r:` `
+   MD4           , :o:` ` 128,   3,             , :y:` ` [22]_, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :r:` ` [20]_, :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `     , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `      , :r:` `
+   RIPEMD        , :o:` ` 128,  \?,             , :y:` ` [23]_, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :r:` ` [7]_, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `      , :r:` `
+   MD5           , :o:` ` 128,   6,             ,             ,             , :y:` ` [24]_, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :r:` ` [7]_, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `      , :r:` `
+   HAVAL-256-3   ,        256,  \?,             ,             ,             , :g:` ` [25]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `      , :r:` ` [11]_, :r:` `     , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `      , :r:` `
+   SHA-0         , :o:` ` 160,  \?,             ,             ,             ,             , :g:` ` [26]_, :g:` `      , :y:` ` [*]_ , :y:` `      , :y:` `      , :y:` `      , :y:` `, :y:` `      , :y:` `      , :y:` `      , :y:` `      , :y:` `     , :y:` `      , :r:` ` [27]_, :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `      , :r:` `
+   GOST          ,        256,  \?,             ,             ,             ,             ,             , :g:` ` [28]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :y:` ` [14]_, :y:` `, :y:` `     , :y:` `, :y:` `      , :y:` `      , :y:` `
+   SHA-1         , :o:` ` 160,   5,             ,             ,             ,             ,             ,             , :g:` ` [29]_, :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `     , :r:` ` [15]_, :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` ` [51]_, :r:` `
+   RIPEMD-160    , :o:` ` 160,  14,             ,             ,             ,             ,             ,             ,             , :g:` ` [30]_, :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :o:` ` [*]_, :o:` `, :o:` `      , :o:` `      , :o:` `
+   Tiger         ,        192,   7,             ,             ,             ,             ,             ,             ,             , :g:` ` [31]_, :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   Panama        ,        512, 2.5,             ,             ,             ,             ,             ,             ,             ,             ,             , :g:` ` [33]_, :g:` `, :g:` `      , :g:` `      , :y:` ` [34]_, :y:` `      , :y:` `     , :y:` `      , :y:` `      , :r:` ` [35]_, :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `      , :r:` `
+   Whirlpool     ,        512,  35,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       , :g:` ` [32]_, :g:` `      , :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   SHA-256       ,        256,  13,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             , :g:` ` [37]_, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   RadioGatún    ,        256,  \?,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,             ,             ,             ,            ,             , :g:` ` [38]_, :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   Skein         ,        256,   6,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,             ,             ,             ,            ,             ,             ,             , :g:` ` [39]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   Blake         ,        256,   8,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,             ,             ,             ,            ,             ,             ,             , :g:` ` [40]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   Grøstl        ,        256,  11,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,             ,             ,             ,            ,             ,             ,             , :g:` ` [41]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   Keccak (SHA-3),        256,  11,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,             ,             ,             ,            ,             ,             ,             , :g:` ` [42]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   JH            ,        256,  16,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,             ,             ,             ,            ,             ,             ,             , :g:` ` [43]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `      , :g:` `
+   BLAKE2        ,        256,   4,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,             ,             ,             ,            ,             ,             ,             ,             ,       ,            ,       , :g:` ` [44]_, :g:` `      , :g:` `
 
 .. csv-table:: Figure 2: Chronological view of (second-)pre-image attacks
    :widths: 12,5,5,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8
-   :header: hash,bits ,cpb , '89         , '90         , '91         , '92         , '93         , '94         , '95         , '96         , '97         , '98         , '99   , '00         , '01    ,'02         , '03         , '04        , '05         , '06         , '07         , '08         , '09   , '10        , '11   , '12         , '13   , '14
+   :header: hash ,bits       ,cpb , '89         , '90         , '91         , '92         , '93         , '94         , '95         , '96         , '97         , '98         , '99   , '00         , '01    ,'02         , '03         , '04        , '05         , '06         , '07         , '08         , '09   , '10        , '11   , '12         , '13   , '14
 
-   MD2           , 128, 638, :g:` ` [21]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Snefru-2      , 128,  \?,             , :g:` ` [3]_ , :r:` ` [19]_, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `      , :r:` `, :r:` `      , :r:` `      , :r:` `     , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
-   MD4           , 128,   3,             , :g:` ` [22]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   RIPEMD        , 128,  \?,             , :g:` ` [23]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   MD5           , 128,   6,             ,             ,             , :g:` ` [24]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   HAVAL-256-3   , 256,  \?,             ,             ,             , :g:` ` [25]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   SHA-0         , 160,  \?,             ,             ,             ,             , :g:` ` [26]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   GOST          , 256,  \?,             ,             ,             ,             ,             , :g:` ` [28]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   SHA-1         , 160,   5,             ,             ,             ,             ,             ,             , :g:` ` [29]_, :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   RIPEMD-160    , 160,  14,             ,             ,             ,             ,             ,             ,             , :g:` ` [30]_, :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Tiger         , 192,   7,             ,             ,             ,             ,             ,             ,             , :g:` ` [31]_, :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Panama        , 512, 2.5,             ,             ,             ,             ,             ,             ,             ,             ,             , :g:` ` [33]_, :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Whirlpool     , 512,  35,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       , :g:` ` [32]_, :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   SHA-256       , 256,  13,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       , :g:` ` [37]_, :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   RadioGatún    , 256,  \?,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             , :g:` ` [38]_, :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Skein         , 256,   6,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [39]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Blake         , 256,   8,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [40]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Grøstl        , 256,  11,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [41]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   Keccak (SHA-3), 256,  11,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [42]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   JH            , 256,  16,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [43]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
-   BLAKE2        , 256,   4,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             ,             ,       ,            ,       , :g:` ` [44]_, :g:` `, :g:` `
+   MD2           , :c:` ` 128, 638, :g:` ` [21]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   Snefru-2      , :c:` ` 128,  \?,             , :g:` ` [3]_ , :r:` ` [19]_, :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `      , :r:` `, :r:` `      , :r:` `      , :r:` `     , :r:` `      , :r:` `      , :r:` `      , :r:` `      , :r:` `, :r:` `     , :r:` `, :r:` `      , :r:` `, :r:` `
+   MD4           , :c:` ` 128,   3,             , :g:` ` [22]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   RIPEMD        , :c:` ` 128,  \?,             , :g:` ` [23]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   MD5           , :c:` ` 128,   6,             ,             ,             , :g:` ` [24]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   HAVAL-256-3   ,        256,  \?,             ,             ,             , :g:` ` [25]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   SHA-0         , :c:` ` 160,  \?,             ,             ,             ,             , :g:` ` [26]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   GOST          ,        256,  \?,             ,             ,             ,             ,             , :g:` ` [28]_, :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   SHA-1         , :c:` ` 160,   5,             ,             ,             ,             ,             ,             , :g:` ` [29]_, :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   RIPEMD-160    , :c:` ` 160,  14,             ,             ,             ,             ,             ,             ,             , :g:` ` [30]_, :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   Tiger         ,        192,   7,             ,             ,             ,             ,             ,             ,             , :g:` ` [31]_, :g:` `      , :g:` `      , :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   Panama        ,        512, 2.5,             ,             ,             ,             ,             ,             ,             ,             ,             , :g:` ` [33]_, :g:` `, :g:` `      , :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   Whirlpool     ,        512,  35,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       , :g:` ` [32]_, :g:` `, :g:` `      , :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   SHA-256       ,        256,  13,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       , :g:` ` [37]_, :g:` `      , :g:` `     , :g:` `      , :g:` `      , :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   RadioGatún    ,        256,  \?,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             , :g:` ` [38]_, :g:` `      , :g:` `      , :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   Skein         ,        256,   6,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [39]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   Blake         ,        256,   8,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [40]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   Grøstl        ,        256,  11,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [41]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   Keccak (SHA-3),        256,  11,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [42]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   JH            ,        256,  16,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             , :g:` ` [43]_, :g:` `, :g:` `     , :g:` `, :g:` `      , :g:` `, :g:` `
+   BLAKE2        ,        256,   4,             ,             ,             ,             ,             ,             ,             ,             ,             ,             ,       ,             ,       ,             ,             ,            ,             ,             ,             ,             ,       ,            ,       , :g:` ` [44]_, :g:` `, :g:` `
 
 I label an attack as cheaper than brute force only if the attack comp
 times the attack mem is less than the cost of brute force search (see
@@ -256,7 +284,7 @@ an error in this document, please write to me: zooko@LeastAuthority.com.
 +----------------------+------+------+-----+------------+------+-----+---------+------------+------+-----+-------+
 | SHA-1                | 1995 |  160 | 4.8 | :r:`no`    | 2⁶⁹  | 2⁰  | [15]_   | :g:`yes`   |      |     |       |
 +----------------------+------+------+-----+------------+------+-----+---------+------------+------+-----+-------+
-| RIPEMD-160 [30]_     | 1996 |  160 |13.6 | :y:`yes`   | 2⁸⁰  | 2⁰  | `[§]`_  | :g:`yes`   |      |     |       |
+| RIPEMD-160 [30]_     | 1996 |  160 |13.6 | :o:`maybe` | 2⁸⁰  | 2⁰  | `[§]`_  | :g:`yes`   |      |     |       |
 +----------------------+------+------+-----+------------+------+-----+---------+------------+------+-----+-------+
 | Tiger [31]_          | 1996 |  192 | 6.2 | :g:`yes`   |      |     |         | :g:`yes`   | 2¹⁸⁹ | 2⁸  | [16]_ |
 +----------------------+------+------+-----+------------+------+-----+---------+------------+------+-----+-------+
@@ -264,7 +292,7 @@ an error in this document, please write to me: zooko@LeastAuthority.com.
 +----------------------+------+------+-----+------------+------+-----+---------+------------+------+-----+-------+
 | Whirlpool [32]_      | 2000 |  512 |23.1 | :g:`yes`   |      |     |         | :g:`yes`   |      |     |       |
 +----------------------+------+------+-----+------------+------+-----+---------+------------+------+-----+-------+
-| SHA-256 [37]_        | 2002 |  256 |13.0 | :g:`yes`   |      |     |         | :g:`yes`   |      |     |       |
+| SHA-256 [37]_ [52]_  | 2001 |  256 |13.0 | :g:`yes`   |      |     |         | :g:`yes`   |      |     |       |
 +----------------------+------+------+-----+------------+------+-----+---------+------------+------+-----+-------+
 | RadioGatún [38]_     | 2006 |  256 |  \? | :g:`yes`   |      |     |         | :g:`yes`   |      |     |       |
 +----------------------+------+------+-----+------------+------+-----+---------+------------+------+-----+-------+
@@ -287,15 +315,16 @@ an error in this document, please write to me: zooko@LeastAuthority.com.
    * *comp*: approximate computation required for the attack
    * *mem*: approximate memory required for the attack
 
-.. [*] Cycles per byte Panama were taken from on ebash's amd64-h9ivy_,
-       4096-byte blocks, median measurement, except for Panama, which is
-       not measured on ebash. For Panama, I measured it on my laptop (an
-       Intel(R) Core(TM) i5-3427U, which is similar to the ebash h9ivy
-       machine) with Crypto++ v5.6.2's implementation of Panama. I also
-       measured MD5, SHA-1, SHA-256, SHA-512, SHA-3-256, SHA-3-512,
-       Tiger, Whirlpool, and RIPEMD-160 on my machine and confirmed that
-       their measurements on my machine were similar to the measurements
-       posted from amd64-h9ivy_.
+.. [*] Cycles per byte for Panama were taken from on ebash's
+       amd64-h9ivy_, 4096-byte blocks, median measurement, except for
+       Panama, which is not measured on ebash. XXX this sentence is fucked up
+       For Panama, I measured it
+       on my laptop (an Intel(R) Core(TM) i5-3427U, which is similar to
+       the ebash h9ivy machine) with Crypto++ v5.6.2's implementation of
+       Panama. I also measured MD5, SHA-1, SHA-256, SHA-512, SHA-3-256,
+       SHA-3-512, Tiger, Whirlpool, and RIPEMD-160 on my machine and
+       confirmed that their measurements on my machine were similar to
+       the measurements posted from amd64-h9ivy_.
 
 .. | Snefru-3 [3]_  |      |          |     | :r:`no`    | 2²⁹  | 2⁰  |       | :r:`no`    | 2⁵⁶  | 2⁰  |       |
 .. +----------------+      |          +-----+------------+------+-----+       +------+-----+------+-----+       +
@@ -350,26 +379,26 @@ Acknowledgments
 Thanks to Daira Hopwood, Andreas Hülsing, and Samuel Neves for comments on this note.
 
 
-.. [0] http://eprint.iacr.org/2011/484 .. Buchmann-2011
-.. [1] http://cr.yp.to/papers.html#bruteforce .. Bernstein-2005
-.. [2] http://www.springerlink.com/content/qn746388035614r1/ .. Knudsen-2007
-.. [3] http://www.springerlink.com/content/t10683l407363633/ .. Merkle-1990
-.. [4] http://www.springerlink.com/content/208q118x13181g32/ .. Biham-2008
-.. [5] http://eprint.iacr.org/2010/583 .. Zhong-2010
-.. [6] http://www.springerlink.com/content/v6526284mu858v37/ .. Naito-2006
-.. [7] http://eprint.iacr.org/2004/199 .. Wang-2004 “Collisions for Hash Functions MD4, MD5, HAVAL-128 and RIPEMD”
-.. [8] http://www.springerlink.com/content/d7pm142n58853467/ .. Sasaki-2009
-.. [9] http://marc-stevens.nl/research/papers/MTh%20Marc%20Stevens%20-%20On%20Collisions%20for%20MD5.pdf .. Stevens-2007
-.. [10] http://www.springerlink.com/content/d382324nl16251pp/ .. Sasaki-2008
-.. [11] http://academic.research.microsoft.com/Publication/676305/cryptanalysis-of-3pass-haval .. Van-Rompay-2003
-.. [12] http://www.springerlink.com/content/0n9018738x721090/ .. Yu-2006
-.. [13] http://www.springerlink.com/content/3810jp9730369045/ .. Manuel-2008
-.. [14] http://www.cosic.esat.kuleuven.be/publications/article-2091.pdf .. Mendel-2008
-.. [15] http://people.csail.mit.edu/yiqun/SHA1AttackProceedingVersion.pdf .. Wang-2005b “Finding Collisions in the Full SHA-1”
-.. [16] http://eprint.iacr.org/2010/016 .. Guo-2010
-.. [17] http://radiogatun.noekeon.org/panama/PanamaAttack.pdf .. Daemen-2007 “Producing Collisions for Panama, Instantaneously”
-.. [18] http://www.win.tue.nl/hashclash/rogue-ca/ .. Sotirov-2009
-.. [19] http://link.springer.com/chapter/10.1007%2F3-540-46766-1_11 .. Biham-1991
+.. [0] http://eprint.iacr.org/2011/484 Buchmann-2011
+.. [1] http://cr.yp.to/papers.html#bruteforce Bernstein-2005
+.. [2] http://www.springerlink.com/content/qn746388035614r1/ Knudsen-2007
+.. [3] http://www.springerlink.com/content/t10683l407363633/ Merkle-1990
+.. [4] http://www.springerlink.com/content/208q118x13181g32/ Biham-2008
+.. [5] http://eprint.iacr.org/2010/583 Zhong-2010
+.. [6] http://www.springerlink.com/content/v6526284mu858v37/ Naito-2006
+.. [7] http://eprint.iacr.org/2004/199 Wang-2004 “Collisions for Hash Functions MD4, MD5, HAVAL-128 and RIPEMD”
+.. [8] http://www.springerlink.com/content/d7pm142n58853467/ Sasaki-2009
+.. [9] http://marc-stevens.nl/research/papers/MTh%20Marc%20Stevens%20-%20On%20Collisions%20for%20MD5.pdf Stevens-2007
+.. [10] http://www.springerlink.com/content/d382324nl16251pp/ Sasaki-2008
+.. [11] http://academic.research.microsoft.com/Publication/676305/cryptanalysis-of-3pass-haval Van-Rompay-2003
+.. [12] http://www.springerlink.com/content/0n9018738x721090/ Yu-2006
+.. [13] http://www.springerlink.com/content/3810jp9730369045/ Manuel-2008
+.. [14] http://www.cosic.esat.kuleuven.be/publications/article-2091.pdf Mendel-2008
+.. [15] http://people.csail.mit.edu/yiqun/SHA1AttackProceedingVersion.pdf Wang-2005b “Finding Collisions in the Full SHA-1”
+.. [16] http://eprint.iacr.org/2010/016 Guo-2010
+.. [17] http://radiogatun.noekeon.org/panama/PanamaAttack.pdf Daemen-2007 “Producing Collisions for Panama, Instantaneously”
+.. [18] http://www.win.tue.nl/hashclash/rogue-ca/ Sotirov-2009
+.. [19] http://link.springer.com/chapter/10.1007%2F3-540-46766-1_11 Biham-1991
 .. [20] http://repo.zenk-security.com/Cryptographie%20.%20Algorithmes%20.%20Steganographie/Cryptanalysis%20of%20MD4.pdf .. Dobbertin-1995
 .. [21] https://tools.ietf.org/html/rfc1115
 .. [22] https://tools.ietf.org/html/rfc1186
@@ -377,17 +406,17 @@ Thanks to Daira Hopwood, Andreas Hülsing, and Samuel Neves for comments on this
 .. [24] https://tools.ietf.org/html/rfc1321
 .. [25] http://labs.calyptix.com/files/haval-paper.pdf Zheng-1992 “HAVAL – a one-way hashing algorithm with variable length of output”
 .. [26] "FIPS PUB 180 / Federal Information Processing Standards Publication 180 / 1993 MAY 11"
-.. [27] http://link.springer.com/chapter/10.1007%2F11426639_3 .. Biham-2005 “Collisions of SHA-0 and Reduced SHA-1”
+.. [27] http://link.springer.com/chapter/10.1007%2F11426639_3 Biham-2005 “Collisions of SHA-0 and Reduced SHA-1”
 .. [28] "GOST 34.11-94, Information Technology Cryptographic Data Security Hashing Function (1994) (in Russian)"
-.. [29] http://itl.nist.gov/fipspubs/fip180-1.htm .. SHA-1
+.. [29] http://itl.nist.gov/fipspubs/fip180-1.htm SHA-1
 .. [30] http://link.springer.com/chapter/10.1007%2F3-540-60865-6_44 “RIPEMD-160: A Strengthened Version of RIPEMD”
 .. [31] http://link.springer.com/chapter/10.1007/3-540-60865-6_46 Anderson-1996 “Tiger: A fast new hash function”
 .. [32] http://cryptospecs.googlecode.com/svn/trunk/hash/specs/whirlpool.pdf Barreto-2000 “The WHIRLPOOL Hashing Function”
 .. [33] http://link.springer.com/chapter/10.1007/3-540-69710-1_5 Daemen-1998 “Fast Hashing and Stream Encryption with Panama”
 .. [34] http://www.cosic.esat.kuleuven.be/publications/article-81.pdf Rijmen-2002 “Producing Collisions for PANAMA”
 .. [35] http://radiogatun.noekeon.org/panama/ Daemen-2007 “Producing Collisions for Panama, Instantaneously”
-.. [36] http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.106.4759 .. Wang-2005a .. “Cryptanalysis of the hash functions MD4 and RIPEMD”
-.. [37] http://csrc.nist.gov/publications/fips/fips180-2/fips180-2.pdf .. “FIPS Publication 180-2”
+.. [36] http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.106.4759 Wang-2005a “Cryptanalysis of the hash functions MD4 and RIPEMD”
+.. [37] http://csrc.nist.gov/publications/fips/fips180-2/fips180-2.pdf “FIPS Publication 180-2”
 .. [38] http://radiogatun.noekeon.org/ Bertoni-2006 “The RadioGatún Hash Function Family”
 .. [39] http://www.skein-hash.info/sites/default/files/skein1.3.pdf Ferguson-2008 “The Skein Hash Function Family”
 .. [40] https://131002.net/blake/ Aumasson-2008 “SHA-3 proposal BLAKE”
@@ -400,6 +429,8 @@ Thanks to Daira Hopwood, Andreas Hülsing, and Samuel Neves for comments on this
 .. [47] http://www.keylength.com/en/3/
 .. [49] http://www.ecrypt.eu.org/documents/D.SPA.20.pdf Smart-2012 “ECRYPT II Yearly Report on Algorithms and Keysizes (2011-2012)”
 .. [50] http://www.mail-archive.com/cryptography@metzdowd.com/msg10800.html Linus Torvalds email 
+.. [51] http://oai.cwi.nl/oai/asset/21208/21208B.pdf Stevens-2013 “New collision attacks on SHA-1 based on optimal joint local-collision analysis”
+.. [52] https://www.google.com/patents/US6829355 SHA-2 patent filed 2001
 
 
 .. .. _Leurent-2008: http://www.di.ens.fr/~leurent/files/MD4_FSE08.pdf
@@ -434,6 +465,9 @@ Thanks to Daira Hopwood, Andreas Hülsing, and Samuel Neves for comments on this
      $(document).ready(function() {
        $('.c').parent().addClass('c-parent');
      });
+     $(document).ready(function() {
+       $('.o').parent().addClass('o-parent');
+     });
    </script>
 
    <style>
@@ -446,5 +480,27 @@ Thanks to Daira Hopwood, Andreas Hülsing, and Samuel Neves for comments on this
       .g-parent {background-color:#00FF00;}
    </style>
    <style>
+      .o-parent {background-color:#FF6600;}
+   </style>
+   <style>
       .c-parent {background-color:transparent;}
    </style>
+
+
+
+
+---- moved aside
+
+Newer hash functions do not appear to be vulnerable to collision attacks,
+but since they are newer, there has also been less time for cryptanalysts
+to find flaws in them. (See `Figure 1`_, below.)
+
+What about pre-image attacks or second pre-image attacks? Have hash
+functions historically turned out to be vulnerable to those?
+
+The answer is that except for “Snefru” (published in 1990), no secure
+hash function has ever been shown to be vulnerable to (second-)pre-image
+attacks.
+
+**Therefore the historical success of collision attacks does not imply a danger of pre-image attacks.**
+
