@@ -11,7 +11,6 @@ by Zooko Wilcox-O'Hearn, `LeastAuthority.com`_, 2014-07-26
 
 .. _`LeastAuthority.com`: https://LeastAuthority.com
 
-======================
 DISCLAIMER AND WARNING
 ======================
 
