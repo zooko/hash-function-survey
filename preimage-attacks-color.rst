@@ -11,6 +11,12 @@ by Zooko Wilcox-O'Hearn, `LeastAuthority.com`_, 2014-07-26
 
 .. _`LeastAuthority.com`: https://LeastAuthority.com
 
+======================
+DISCLAIMER AND WARNING
+======================
+
+This document is a draft of a work-in-progress, which is being hosted in a publicly visible location *only* in order to facilitate collaborative editing among its authors and contributors.  It is not intended to be published in its current form and it may have errors or omissions.
+
 Summary
 =======
 
