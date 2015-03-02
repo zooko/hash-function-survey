@@ -60,9 +60,9 @@ adversary can't find any collision.
 A hash function is *pre-image resistant* if, given an output (image), an
 adversary can't find any input (pre-image) which results in that output.
 
-A hash function is *second pre-image resistant* if, given a pre-image, an
-adversary can't find any *other* pre-image which results in the same
-image.
+A hash function is *second pre-image resistant* if, given *one*
+pre-image, an adversary can't find any *other* pre-image which results in
+the same image.
 
 When collision attacks don't matter
 ===================================
