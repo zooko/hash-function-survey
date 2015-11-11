@@ -7,14 +7,14 @@ the historical success of collision attacks does not imply a danger of pre-image
 *plus: a history of attacks on secure hash functions*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-by Zooko Wilcox-O'Hearn, `LeastAuthority.com`_, 2014-07-26
+by Zooko Wilcox-O'Hearn, `LeastAuthority.com`_, 2015-11-11
 
 .. _`LeastAuthority.com`: https://LeastAuthority.com
 
 DISCLAIMER AND WARNING
 ======================
 
-This document is a draft of a work-in-progress, which is being hosted in a publicly visible location *only* in order to facilitate collaborative editing among its authors and contributors.  It is not intended to be published in its current form and it may have errors or omissions.
+*This document is a draft of a work-in-progress, which is being hosted in a publicly visible location only in order to facilitate collaborative editing among its authors and contributors.  It is not intended to be published in its current form and it may have errors or omissions.*
 
 Summary
 =======
@@ -23,29 +23,13 @@ Most of the secure hash functions ever designed have turned out to be
 vulnerable to collision attacks. This includes the widely-used secure
 hash functions MD5 and SHA-1.
 
-A widely cited web page shows a graphical representation of the history
-of various hash functions being broken.
+What about pre-image and second-pre-image attacks? Have practical hash
+functions historically been vulnerable to those?
 
-.. figure:: valerieaurora.org-hash-crop-2.png
-   :target: http://valerieaurora.org/hash.html
-   :alt: Image from `http://valerieaurora.org/hash.html`_, downloaded 2014-02-14
-   :align: right
-   :width: 12cm
-
-   Image from `http://valerieaurora.org/hash.html`_, downloaded 2014-02-14
-
-   (Click to view original.)
-
-.. _`http://valerieaurora.org/hash.html`: http://valerieaurora.org/hash.html
-
-The advice on that web page is that if you are relying on your hash
-function for collision-resistance, then you should be prepared to migrate
-to a new hash function every few years.
-
-One limitation of this analysis is that it considers only *collision
-attacks*. There are some use cases where collision attacks don't matter,
-and all that matters is *pre-image attacks*. What do we learn if we apply
-this sort of analysis to the history of pre-image attacks?
+The bottom line is that if you rely on collision-resistance, you should
+live in fear. Most of the hash functions ever designed have turned out to
+be vulnerable to collisions. If you rely on (second-)pre-image
+resistance, you can rest easy—almost any hash function is safe for you.
 
 Preliminaries
 =============
@@ -60,7 +44,7 @@ adversary can't find any collision.
 A hash function is *pre-image resistant* if, given an output (image), an
 adversary can't find any input (pre-image) which results in that output.
 
-A hash function is *second pre-image resistant* if, given *one*
+A hash function is *second-pre-image resistant* if, given *one*
 pre-image, an adversary can't find any *other* pre-image which results in
 the same image.
 
@@ -97,6 +81,59 @@ digital signatures that rely on factorization or discrete log, such as
 RSA, DSA, ECDSA, or Ed25519. There is no reason to think that such a
 quantum computer would enable them to break secure hash functions,
 however.
+
+Another reason is that even if the attacker does *not* have a
+sufficiently large quantum computer, but has a mathematical breakthrough
+that allows them to exploit the asymmetric crypto technique (such as
+factoring, discrete log, code-based crypto, etc.), then they would be
+able exploit asymmetric-crypto-based digital signatures, but not
+hash-based digital signatures.
+
+What about in the other direction, though? Can't we imagine an attacker
+who can break hash-based signatures but can't break
+asymmetric-crypto-based signatures? No—there cannot be such an
+attacker. Any attacker who can break hash-based signatures can also break
+asymmetric-crypto-based signatures, because the latter rely on hash
+functions in addition to relying on their asymmetric crypto primitives.
+
+.. role:: y
+.. role:: r
+.. role:: g
+.. role:: c
+.. role:: o
+
+.. _`Figure 0`:
+
+*color key: is relying on this safe?*
+
+:r:`unsafe`
+   You can be exploited if you rely on this.
+
+:g:`safe`
+   There is no reason to believe that relying on this will make you
+   vulnerable to exploitation.
+
+*Figure 0: safety of digital signature algorithms*
+
++------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| digital signature type                   | today     | quantum computer | asymmetric crypto breakthrough | hash collisions | hash preimages |
++==========================================+===========+==================+================================+=================+================+
+| preimage-resistant hash-based (XMSS)     | :g:`safe` | :g:`safe`        | :g:`safe`                      | :g:`safe`       | :r:`unsafe`    |
++------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| collision-resistant hash-based (SPHINCS) | :g:`safe` | :g:`safe`        | :g:`safe`                      | :r:`unsafe`     | :r:`unsafe`    |
++------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| all other post-quantum                   | :g:`safe` | :g:`safe`        | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
+| (McEliece, NTRUsign,                     |           |                  |                                |                 |                |
+| LWE, Ring-LWE,                           |           |                  |                                |                 |                |
+| Lattice-based signatures,                |           |                  |                                |                 |                |
+| code-based signatures,                   |           |                  |                                |                 |                |
+| Rainbow,                                 |           |                  |                                |                 |                |
+| multivariate-quadratic,                  |           |                  |                                |                 |                |
+| etc.)                                    |           |                  |                                |                 |                |
++------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| all others (RSA, DSA,                    | :g:`safe` | :r:`unsafe`      | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
+| ECDSA, Ed25519, etc.)                    |           |                  |                                |                 |                |
++------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
 
 message authentication codes
 ----------------------------
@@ -169,12 +206,6 @@ and even to collision attacks that could be implemented in practice.
 History of attacks on hash functions
 ====================================
 
-.. role:: y
-.. role:: r
-.. role:: g
-.. role:: c
-.. role:: o
-
 This is a timeline of the publication of hash functions and of
 publication of weaknesses in hash functions.
 
@@ -188,21 +219,24 @@ or require the messages to be 2⁵⁶ blocks long.
 *color key: is relying on this safe?*
 
 :r:`no`
-   It is possible to violate this property.
+   You can be exploited if you rely on this.
 
 :y:`maybe`
    There are known attacks but they are probably too expensive to
-   actually implement. If the attacks have been secretly improved then it
-   might be possible to violate this property.
+   actually implement. If the attacks have been secretly improved, or if
+   the attacker has more efficient computational resources than we think,
+   then maybe you can be exploited if you rely on this.
 
 :o:`maybe`
    There are no known attacks that are cheaper than brute force, but the
-   hash output size is small enough that brute force might be feasible.
+   hash output size is small enough that brute force might be feasible,
+   so maybe you can be exploited if you rely on this.
 
 :g:`yes`
    There is no known attack cheaper than brute force, and to pay for a
    brute force attack is far, far beyond the bounds of possibility for
-   the forseeable future.
+   the forseeable future. There is no reason to believe that relying on
+   this will make you vulnerable to exploitation.
 
 
 .. csv-table:: Figure 1: Chronological view of collision attacks
@@ -508,4 +542,31 @@ hash function has ever been shown to be vulnerable to (second-)pre-image
 attacks.
 
 **Therefore the historical success of collision attacks does not imply a danger of pre-image attacks.**
+
+
+-------
+
+A widely cited web page shows a graphical representation of the history
+of various hash functions being broken.
+
+.. figure:: valerieaurora.org-hash-crop-2.png
+   :target: http://valerieaurora.org/hash.html
+   :alt: Image from `http://valerieaurora.org/hash.html`_, downloaded 2014-02-14
+   :align: right
+   :width: 12cm
+
+   Image from `http://valerieaurora.org/hash.html`_, downloaded 2014-02-14
+
+   (Click to view original.)
+
+.. _`http://valerieaurora.org/hash.html`: http://valerieaurora.org/hash.html
+
+The advice on that web page is that if you are relying on your hash
+function for collision-resistance, then you should be prepared to migrate
+to a new hash function every few years.
+
+One limitation of this analysis is that it considers only *collision
+attacks*. There are some use cases where collision attacks don't matter,
+and all that matters is *pre-image attacks*. What do we learn if we apply
+this sort of analysis to the history of pre-image attacks?
 
