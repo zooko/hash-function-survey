@@ -115,25 +115,23 @@ functions in addition to relying on their asymmetric crypto primitives.
 
 *Figure 0: safety of digital signature algorithms*
 
-+------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
-| digital signature type                   | today     | quantum computer | asymmetric crypto breakthrough | hash collisions | hash preimages |
-+==========================================+===========+==================+================================+=================+================+
-| preimage-resistant hash-based (XMSS)     | :g:`safe` | :g:`safe`        | :g:`safe`                      | :g:`safe`       | :r:`unsafe`    |
-+------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
-| collision-resistant hash-based (SPHINCS) | :g:`safe` | :g:`safe`        | :g:`safe`                      | :r:`unsafe`     | :r:`unsafe`    |
-+------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
-| all other post-quantum                   | :g:`safe` | :g:`safe`        | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
-| (McEliece, NTRUsign,                     |           |                  |                                |                 |                |
-| LWE, Ring-LWE,                           |           |                  |                                |                 |                |
-| Lattice-based signatures,                |           |                  |                                |                 |                |
-| code-based signatures,                   |           |                  |                                |                 |                |
-| Rainbow,                                 |           |                  |                                |                 |                |
-| multivariate-quadratic,                  |           |                  |                                |                 |                |
-| etc.)                                    |           |                  |                                |                 |                |
-+------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
-| all others (RSA, DSA,                    | :g:`safe` | :r:`unsafe`      | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
-| ECDSA, Ed25519, etc.)                    |           |                  |                                |                 |                |
-+------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
++-----------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| digital signature type                  | today     | quantum computer | asymmetric crypto breakthrough | hash collisions | hash preimages |
++=========================================+===========+==================+================================+=================+================+
+| preimage-resistant-hash-based (SPHINCS) | :g:`safe` | :g:`safe`        | :g:`safe`                      | :g:`safe`       | :r:`unsafe`    |
++-----------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| all other post-quantum                  | :g:`safe` | :g:`safe`        | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
+| (McEliece, NTRUsign,                    |           |                  |                                |                 |                |
+| LWE, Ring-LWE,                          |           |                  |                                |                 |                |
+| Lattice-based signatures,               |           |                  |                                |                 |                |
+| code-based signatures,                  |           |                  |                                |                 |                |
+| Rainbow,                                |           |                  |                                |                 |                |
+| multivariate-quadratic,                 |           |                  |                                |                 |                |
+| etc.)                                   |           |                  |                                |                 |                |
++-----------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| all others (RSA, DSA,                   | :g:`safe` | :r:`unsafe`      | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
+| ECDSA, Ed25519, etc.)                   |           |                  |                                |                 |                |
++-----------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
 
 message authentication codes
 ----------------------------
