@@ -1,18 +1,15 @@
 ﻿.. -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*-
 
-===============================================
- a history of attacks on secure hash functions
-===============================================
+============================================================
+lessons from the history of attacks on secure hash functions
+============================================================
 
 by Zooko Wilcox, `Zcash`_ and `LeastAuthority`_, 2017-02-24
 
 .. _`Zcash`: https://z.cash
 .. _`LeastAuthority`: https://LeastAuthority.com
 
-DISCLAIMER AND WARNING
-======================
-
-*This document is a draft of a work-in-progress, which is being hosted in a publicly visible location only in order to facilitate collaborative editing among its authors and contributors.  It is not intended to be published in its current form and it may have errors or omissions.*
+*This document is a work-in-progress. Please contact the author if you see errors or omissions.*
 
 Summary
 =======
@@ -24,10 +21,17 @@ hash functions MD5 and SHA-1.
 What about pre-image and second-pre-image attacks? Have practical hash
 functions historically been vulnerable to those?
 
-The bottom line is that if you rely on collision-resistance, you should
-live in fear. Most of the hash functions ever designed have turned out to
-be vulnerable to collisions. If you rely on (second-)pre-image
-resistance, you can rest easy—almost any hash function is safe for you.
+I summarize here the history of attacks on secure hash functions in order
+to yield an answer to that.
+
+The main result is that there is a big gap between the history of
+collision attacks and pre-image attacks. Almost *all* older secure hash
+functions have fallen to collision attacks. Almost *none* have ever
+fallen to pre-image attacks.
+
+Secondarily, almost no *new* secure hash functions (designed after
+approximately the year 2000) have so far succumbed to collision attacks,
+either.
 
 Preliminaries
 =============
@@ -53,11 +57,10 @@ There are cases where collision-resistance doesn't matter at all and what
 you care about is second-pre-image resistance.
 
 For such uses it would be harmless to be able to generate collisions, but
-harmful to be able to generate pre-images or second-pre-images [*]_. For
-this purpose the relevant question is not whether hash function designs
-have historically been revealed to be vulnerable to collisions but
-instead whether they've been revealed to be vulnerable to
-(second-)pre-images.
+harmful to be able to generate pre-images or second-pre-images. For this
+purpose the relevant question is not whether hash function designs have
+historically been revealed to be vulnerable to collisions but instead
+whether they've been revealed to be vulnerable to (second-)pre-images.
 
 hash-based digital signatures
 -----------------------------
@@ -65,7 +68,7 @@ hash-based digital signatures
 An example of this is the construction of hash-based digital
 signatures. Hash-based digital signatures are secure (resistant to
 forgery) as long as the hash function they are built on has
-second-pre-image resistance, e.g. [0]_.
+second-pre-image resistance, e.g. SPHINCS_.
 
 Such a hash-based digital signature would fail if its underlying hash
 function failed at second-pre-image resistance, but this is the *only*
@@ -100,8 +103,6 @@ functions in addition to relying on their asymmetric crypto primitives.
 .. role:: c
 .. role:: o
 
-.. _`Figure 0`:
-
 *color key: is relying on this safe?*
 
 :r:`unsafe`
@@ -113,23 +114,23 @@ functions in addition to relying on their asymmetric crypto primitives.
 
 *Figure 0: safety of digital signature algorithms*
 
-+-----------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
-| digital signature type                  | today     | quantum computer | asymmetric crypto breakthrough | hash collisions | hash preimages |
-+=========================================+===========+==================+================================+=================+================+
-| preimage-resistant-hash-based (SPHINCS) | :g:`safe` | :g:`safe`        | :g:`safe`                      | :g:`safe`       | :r:`unsafe`    |
-+-----------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
-| all other post-quantum                  | :g:`safe` | :g:`safe`        | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
-| (McEliece, NTRUsign,                    |           |                  |                                |                 |                |
-| LWE, Ring-LWE,                          |           |                  |                                |                 |                |
-| Lattice-based signatures,               |           |                  |                                |                 |                |
-| code-based signatures,                  |           |                  |                                |                 |                |
-| Rainbow,                                |           |                  |                                |                 |                |
-| multivariate-quadratic,                 |           |                  |                                |                 |                |
-| etc.)                                   |           |                  |                                |                 |                |
-+-----------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
-| all others (RSA, DSA,                   | :g:`safe` | :r:`unsafe`      | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
-| ECDSA, Ed25519, etc.)                   |           |                  |                                |                 |                |
-+-----------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
++--------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| digital signature type                     | today     | quantum computer | asymmetric crypto breakthrough | hash collisions | hash preimages |
++============================================+===========+==================+================================+=================+================+
+| preimage-resistant-hash-based (`SPHINCS`_) | :g:`safe` | :g:`safe`        | :g:`safe`                      | :g:`safe`       | :r:`unsafe`    |
++--------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| all other post-quantum                     | :g:`safe` | :g:`safe`        | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
+| (McEliece, NTRUsign,                       |           |                  |                                |                 |                |
+| LWE, Ring-LWE,                             |           |                  |                                |                 |                |
+| Lattice-based signatures,                  |           |                  |                                |                 |                |
+| code-based signatures,                     |           |                  |                                |                 |                |
+| Rainbow,                                   |           |                  |                                |                 |                |
+| multivariate-quadratic,                    |           |                  |                                |                 |                |
+| etc.)                                      |           |                  |                                |                 |                |
++--------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
+| all others (RSA, DSA,                      | :g:`safe` | :r:`unsafe`      | :r:`unsafe`                    | :r:`unsafe`     | :r:`unsafe`    |
+| ECDSA, Ed25519, etc.)                      |           |                  |                                |                 |                |
++--------------------------------------------+-----------+------------------+--------------------------------+-----------------+----------------+
 
 When collision attacks *do* matter
 ==================================
@@ -151,10 +152,9 @@ git is safe against this attack.
 In contrast to VeriSign and git, the cryptographic constructions
 mentioned above come with proofs showing that the security of the
 construction is guaranteed, assuming the security of some underlying
-component. For example, the hash-based digital signature schemes in [0]_
-come with a proof that *any possible* attack which couldn't generate
-second-pre-images against the hash function couldn't achieve forgery
-against the signature scheme.
+component. For example, the hash-based digital signature SPHINCS_ comes
+with a proof that *any possible* attack which couldn't generate
+second-pre-images against the hash function couldn't forge signatures.
 
 Results
 =======
@@ -191,9 +191,8 @@ publication of weaknesses in hash functions.
 I omit attacks on reduced-round or otherwise weakened variants of hash
 functions (there are a lot of those). I omit attacks that have
 unrealistic requirements, like attacks that require 2¹²⁸ precomputation
-or require the messages to be 2⁵⁶ blocks long.
-
-.. _`Figure 1`:
+or require the messages to be 2⁵⁶ blocks long (there are a lot of those,
+too).
 
 *color key: is relying on this safe?*
 
@@ -384,13 +383,22 @@ an error in this document, please write to me: zooko@z.cash .
 Discussion
 ==========
 
-The main result of this investigation is that “the historical success of
-collision attacks does not imply a danger of pre-image attacks”.
+The main result of this investigation is that there is a big gap between
+the historical successes of collision attacks and the almost
+non-existence successes of pre-image attacks. This is evidence that a
+cryptosystem which is invulnerable to collision-attacks (even if still
+vulnerable to pre-image attacks) is much stronger than one which is
+vulnerable to collision-attacks.
 
-Another interesting pattern that I perceive in these results is that 
+Another interesting pattern that I perceive in these results is that
+*maybe* sometime between 1996 (Tiger) and 2000 (Whirlpool), humanity
+learned how to make collision-resistant hash functions, and none of the
+prominent secure hash functions designed since that era have succumbed to
+collision attacks.
 
-
-
+Or maybe this is just a 15-year-long hiatus, and in the future we'll
+discover how to perform collision attacks against the "modern" secure
+hash functions. Looking in the rearview mirror can't answer that for us.
 
 Acknowledgments
 ===============
@@ -398,7 +406,7 @@ Acknowledgments
 Thanks to Daira Hopwood, Andreas Hülsing, and Samuel Neves for comments on this note.
 
 
-.. [0] http://eprint.iacr.org/2011/484 Buchmann-2011
+.. _SPHINCS: https://sphincs.cr.yp.to/ Bernstein-2014 “SPHINCS: practical stateless hash-based signatures”
 .. [1] http://cr.yp.to/papers.html#bruteforce Bernstein-2005
 .. [2] http://www.springerlink.com/content/qn746388035614r1/ Knudsen-2007
 .. [3] http://www.springerlink.com/content/t10683l407363633/ Merkle-1990
@@ -461,10 +469,10 @@ Thanks to Daira Hopwood, Andreas Hülsing, and Samuel Neves for comments on this
 
 
 :Author: Zooko Wilcox-O'Hearn
-:Contact: zooko@LeastAuthority.com
-:Affiliation: LeastAuthority.com
-:Revision: 0.11.0
-:Date: 2014-02-15
+:Contact: zooko@z.cash
+:Affiliation: Zcash
+:Revision: 2017-02-24
+:Date: 2017-02-24
 :License: `Creative Commons Attribution 4.0 International License`_
 
 .. _Creative Commons Attribution 4.0 International License: http://creativecommons.org/licenses/by/4.0/deed.en_US
@@ -506,50 +514,3 @@ Thanks to Daira Hopwood, Andreas Hülsing, and Samuel Neves for comments on this
    <style>
       .c-parent {background-color:transparent;}
    </style>
-
-
-
-
----- moved aside
-
-Newer hash functions do not appear to be vulnerable to collision attacks,
-but since they are newer, there has also been less time for cryptanalysts
-to find flaws in them. (See `Figure 1`_, below.)
-
-What about pre-image attacks or second pre-image attacks? Have hash
-functions historically turned out to be vulnerable to those?
-
-The answer is that except for “Snefru” (published in 1990), no secure
-hash function has ever been shown to be vulnerable to (second-)pre-image
-attacks.
-
-**Therefore the historical success of collision attacks does not imply a danger of pre-image attacks.**
-
-temp reference to `Figure 0`_
-
--------
-
-A widely cited web page shows a graphical representation of the history
-of various hash functions being broken.
-
-.. figure:: valerieaurora.org-hash-crop-2.png
-   :target: http://valerieaurora.org/hash.html
-   :alt: Image from `http://valerieaurora.org/hash.html`_, downloaded 2014-02-14
-   :align: right
-   :width: 12cm
-
-   Image from `http://valerieaurora.org/hash.html`_, downloaded 2014-02-14
-
-   (Click to view original.)
-
-.. _`http://valerieaurora.org/hash.html`: http://valerieaurora.org/hash.html
-
-The advice on that web page is that if you are relying on your hash
-function for collision-resistance, then you should be prepared to migrate
-to a new hash function every few years.
-
-One limitation of this analysis is that it considers only *collision
-attacks*. There are some use cases where collision attacks don't matter,
-and all that matters is *pre-image attacks*. What do we learn if we apply
-this sort of analysis to the history of pre-image attacks?
-
